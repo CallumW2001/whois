@@ -86,8 +86,7 @@ namespace whois
                 if (viewalldata == true)
                 {
                     LoginID = values[i];
-                    column = "*";
-                    ViewData(LoginID,column);
+                    ViewData(LoginID, "*");
                 }
             }
 
@@ -127,6 +126,11 @@ namespace whois
             string? Phone = "";
             string? Email = "";
             string? Location = "";
+            int? loginid = 0;
+            int? locationid = 0;
+            int? emailid = 0;
+            int? positionid = 0;
+            int? usernum = 0;
 
             Console.WriteLine("Enter Record Details Below to Add to Database: ");
 
@@ -157,6 +161,14 @@ namespace whois
                 Email = Console.ReadLine();
                 Console.WriteLine("Enter Location: ");
                 Location = Console.ReadLine();
+                Console.WriteLine("Enter Location ID:");
+                locationid = Convert.ToInt32(Console.ReadLine());
+                Console.WriteLine("Enter Email ID:");
+                emailid= Convert.ToInt32(Console.ReadLine());
+                Console.WriteLine("Enter Position ID:");
+                positionid = Convert.ToInt32(Console.ReadLine());
+                Console.WriteLine("Enter Login ID:");
+                loginid = Convert.ToInt32(Console.ReadLine());
             }
             catch(Exception e)
             {
@@ -164,10 +176,22 @@ namespace whois
                 Console.WriteLine("Incorrect data type. Must be string.");
             }
 
+            usernum = Convert.ToInt32(userID);
+
             //SQL script which is run in SQL to give instructions to the database.
 
-            string AddRecord = "INSERT INTO computerusers (LoginID, userID, Surname, Forenames, Title, Position, Phone, Email, Location) VALUES " +
-                "('" + LoginID + "', '" + userID + "', '" + Surname + "', '" + Forenames + "', '" + Title + "', '" + Position + "', '" + Phone + "', '" + Email + "', '" + Location + "')";
+            string AddRecord = ("(INSERT INTO `phone number` (`Phone Number`) VALUES('" + Phone + "');" + 
+                "\r\nINSERT INTO userid (userid, forename, surname, title, `phone number_phone number`, location_locationid)\r\nVALUES('"
+                + usernum + "', '" + Forenames + "', '" + Surname + "', '" + Title + "', '" + Phone + "', '" + locationid + "');" +
+                "\r\nINSERT INTO email (EmailID, Email) VALUES ('" + emailid +
+                "', '" + Email + "');" +
+                "\r\nINSERT INTO location (LocationID, Location) VALUES ('" + locationid
+                + "', '" + Location + "');" +
+                "\r\nINSERT INTO LoginID (LoginID, `Login Number`) VALUES ('" + loginid + "', '" + LoginID + "');"
+                 + "\r\nINSERT INTO positions (Position, UserID_UserID) VALUES ('" + Position + "', '" + userID + "');"
+                 + "\r\nINSERT INTO userid_has_email(UserID_UserID, Email_EmailID) VALUES ('" + userID + "', '" + emailid + "');" +
+                 "\r\nINSERT INTO userid_has_loginid (UserID_UserID, LoginID_LoginID) VALUES ('" + userID + "', '" + loginid + "');");
+
             
             //Creates Connection with SQL server
             MySqlConnection connection = new MySqlConnection("server=localhost;user=root;database=mydb;port=3306;password=L3tM31n");
@@ -200,7 +224,7 @@ namespace whois
                 MySqlConnection connection = new MySqlConnection("server=localhost;user=root;database=mydb;port=3306;password=L3tM31n");
                 
                 connection.Open();
-                MySqlCommand command = new MySqlCommand("DELETE FROM computerusers WHERE LoginID = '" + LoginID + "'", connection);
+                MySqlCommand command = new MySqlCommand("DELETE FROM userid WHERE UserID = '" + LoginID + "'", connection);
                     
                 command.ExecuteNonQuery();
                     
@@ -221,11 +245,11 @@ namespace whois
 
             try
             {
-                MySqlConnection connection = new MySqlConnection("server=localhost;user=root;database=computerusers;port=3306;password=L3tM31n");
+                MySqlConnection connection = new MySqlConnection("server=localhost;user=root;database=mydb;port=3306;password=L3tM31n");
 
                 connection.Open();
                 //SQL script to update field given parameters.
-                MySqlCommand command = new MySqlCommand("UPDATE computerusers SET " +  Record  + " = " + "'" + Update + "'" + " WHERE LoginID = " + "'" + LoginID + "'", connection);
+                MySqlCommand command = new MySqlCommand("UPDATE " + Record + " SET " +  Record  + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
 
                 command.ExecuteNonQuery();
 
@@ -243,14 +267,26 @@ namespace whois
         private static void ViewData(string LoginID, string column)
         {
             //Create and open connection
-            MySqlConnection connection = new MySqlConnection("server=localhost;user=root;database=computerusers;port=3306;password=L3tM31n");
+            MySqlConnection connection = new MySqlConnection("server=localhost;user=root;database=mydb;port=3306;password=L3tM31n");
+            string ViewData = "";
+            if (column == "*")
+            {
 
-            //string to insert into SQL for viewing data from specific column.
-            string ViewData = ("SELECT " + column + " FROM computerusers WHERE LoginID ='" + LoginID + "'");
+                //string to insert into SQL for viewing data from specific column.
+                ViewData = ("SELECT UserID, Forename, Surname, Title, Location, Email, `Login Number`," +
+                    " `Phone Number`\r\nFROM userid, email, location, loginid, `phone number`, userid_has_loginid, " +
+                    "userid_has_email\r\nWHERE userid.UserID = '" + LoginID + "'\r\nAND userid.UserID = userid_has_loginid.UserID_UserID\r\nAND userid_has_loginid.LoginID_LoginID" +
+                    " = loginid.LoginID\r\nAND userid.UserID = userid_has_email.UserID_UserID\r\nAND userid_has_email.Email_EmailID = email.EmailID\r\nAND " +
+                    "userid.Location_LocationID = location.LocationID\r\nAND userid.`Phone Number_Phone Number` = `phone number`.`Phone Number`;");
 
+            }
+            else if(column == "location")
+            {
+                ViewData = ("SELECT Location from location, userid WHERE userid.UserID = '" + LoginID + "' AND userid.Location_LocationID = location.LocationID");
+            }
             try
             {
-                Console.WriteLine("Connecting to MySQL, computerusers Database.");
+                Console.WriteLine("Connecting to MySQL, mydb Database.");
                 connection.Open();
                 // Perform database operations 
                 MySqlCommand cmd = new MySqlCommand(ViewData, connection);

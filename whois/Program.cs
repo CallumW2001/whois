@@ -5,6 +5,7 @@ using MySqlX.XDevAPI.Relational;
 using System;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Reflection;
 
 namespace whois
 {
@@ -102,6 +103,7 @@ namespace whois
                     else if(i % 2 == 1)
                     {
                         column = values[i];
+                        column = column.ToLower();
                         ViewData(LoginID,column);
                     }
 
@@ -239,7 +241,7 @@ namespace whois
             }
         }
 
-        private static void EditRecord(string LoginID, string Record, string Update)
+        private static void EditRecord(string LoginID, string column, string Update)
         {
             //Create & open connection to database.
 
@@ -248,9 +250,37 @@ namespace whois
                 MySqlConnection connection = new MySqlConnection("server=localhost;user=root;database=mydb;port=3306;password=L3tM31n");
 
                 connection.Open();
+                MySqlCommand command = new MySqlCommand();
                 //SQL script to update field given parameters.
-                MySqlCommand command = new MySqlCommand("UPDATE " + Record + " SET " +  Record  + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
-
+                if (column == "location")
+                {
+                    command = new MySqlCommand("UPDATE " + "location, userid" + " SET " + column + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
+                }
+                else if(column == "firstname")
+                {
+                    command = new MySqlCommand("UPDATE userid SET " + column + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
+                }
+                else if(column == "surname")
+                {
+                    command = new MySqlCommand("UPDATE " + "userid" + " SET " + column + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
+                }
+                else if(column == "title")
+                {
+                    command = new MySqlCommand("UPDATE " + "userid" + " SET " + column + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
+                }
+                else if(column == "positions")
+                {
+                    command = new MySqlCommand("UPDATE " + "position,userid" + " SET " + column + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
+                }
+                else if(column == "Phone Number")
+                {
+                    command = new MySqlCommand("UPDATE " + "`phone number`,userid" + " SET " + column + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
+                }
+                else if(column == "email")
+                {
+                    command = new MySqlCommand("UPDATE " + "email,userid" + " SET " + column + " = " + "'" + Update + "'" + " WHERE userid.UserID = " + "'" + LoginID + "'", connection);
+                }
+                
                 command.ExecuteNonQuery();
 
                 connection.Close();
@@ -283,6 +313,34 @@ namespace whois
             else if(column == "location")
             {
                 ViewData = ("SELECT Location from location, userid WHERE userid.UserID = '" + LoginID + "' AND userid.Location_LocationID = location.LocationID");
+            }
+            else if(column == "forename")
+            {
+                ViewData = ("SELECT Forename from userid WHERE userid.UserID = '" + LoginID + "'" );
+            }
+            else if(column == "surname")
+            {
+                ViewData = ("SELECT Surname from userid WHERE userid.UserID = '" + LoginID + "'");
+            }
+            else if(column == "title")
+            {
+                ViewData = ("SELECT Title from userid WHERE userid.UserID = '" + LoginID + "'");
+            }
+            else if(column == "phonenumber")
+            {
+                ViewData = ("SELECT `Phone Number` from `phone number`, userid WHERE userid.UserID = '" + LoginID + "' AND `userid`.`Phone Number_Phone Number` = `phone number`.`Phone Number`");
+            }
+            else if(column == "email")
+            {
+                ViewData = ("SELECT email FROM email,userid, userid_has_email WHERE userid.UserID = '" + LoginID + "' AND userid_has_email.Email_EmailID = email.EmailID AND userid_has_email.UserID_UserID = userid.UserID");
+            }
+            else if(column == "loginid")
+            {
+                ViewData = ("SELECT `Login Number` FROM loginid,userid,userid_has_loginid WHERE userid.UserID = '" + LoginID + "' AND userid_has_loginid.LoginID_LoginID = loginid.LoginID AND userid_has_loginid.UserID_UserID = userid.UserID");
+            }
+            else if(column == "userid")
+            {
+                ViewData = ("SELECT UserID FROM userid WHERE userid.UserID = '" + LoginID + "'");
             }
             try
             {
